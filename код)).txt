@@ -1,0 +1,97 @@
+#define SRV_PIN 2
+
+
+#include <Adafruit_PWMServoDriver.h>
+Adafruit_PWMServoDriver pmw = Adafruit_PWMServoDriver();
+
+
+#include <Servo.h>
+#include "Parser.h"
+//bool flag = 0;
+
+void setup() {
+Serial.begin(115200);
+pmw.begin();
+pmw.setPWMFreq(70);
+delay(10);
+
+}
+
+
+void loop() {
+if (Serial.available()) {
+char buf[50];
+int num = Serial.readBytesUntil(';', buf, 60);
+buf[num] = NULL;
+Parser data(buf, ',');
+int ints[10];
+data.parseInts(ints);
+switch (ints[0]) {
+case 2:
+int Bottom = ints[1];
+int Shoulder1 = ints[2];
+int Shoulder2 = ints[3];
+int Holder = ints[4];
+int Round = ints[4];
+
+pmw.setPWM(12, 45, Bottom*3);
+pmw.setPWM(15, 90, Shoulder1*3);
+pmw.setPWM(11, 90, Shoulder2*3);
+pmw.setPWM(4, 0, Round*3);
+pmw.setPWM(7, 90, Holder*3);
+
+
+break;
+}
+}
+
+}
+==============================================
+import processing.serial.*;
+
+import net.java.games.input.*;
+import org.gamecontrolplus.*;
+import org.gamecontrolplus.gui.*;
+
+
+ControlDevice cont;
+ControlIO control;
+Serial serial;
+
+
+float Bottom, Shoulder1, Shoulder2, Holder, Round;
+
+void setup() {
+size(360, 200);
+
+control = ControlIO.getInstance(this);
+cont = control.getMatchedDevice("RoboArm");
+serial = new Serial(this, "COM11", 115200);
+
+if (cont == null) {
+println("not today chump");
+System.exit(-1);
+}
+
+
+}
+
+public void getUserInput(){
+
+Bottom = map(cont.getSlider("Bottom").getValue(), -270, 270, 0, 270);
+Shoulder1 = map(cont.getSlider("Shoulder1").getValue(), -270, 270, 0, 270);
+Shoulder2 = map(cont.getSlider("Shoulder2").getValue(), -270, 270, 0, 270);
+Holder = map(cont.getSlider("Holder").getValue(), -270, 270, 0, 270);
+Round = map(cont.getSlider("Round").getValue(), -270, 270, 0, 270);
+
+
+
+}
+
+void draw(){
+getUserInput();
+background(Bottom,100,255);
+String str = "2" +"," + Bottom + "," + Shoulder1 + "," + Shoulder2 + "," + Holder + "," + Round + ";";
+if (serial != null) serial.write(str);
+
+} 
